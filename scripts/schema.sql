@@ -69,6 +69,21 @@ CREATE TABLE IF NOT EXISTS attachments (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- ─── Ticket history ───────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS ticket_history (
+  id          BIGSERIAL    PRIMARY KEY,
+  ticket_id   UUID         NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+  changed_by  UUID         NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+  changed_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  field_name  VARCHAR(100) NOT NULL,
+  old_value   TEXT,
+  new_value   TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_ticket_history_ticket_id  ON ticket_history(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_ticket_history_changed_by ON ticket_history(changed_by);
+CREATE INDEX IF NOT EXISTS idx_ticket_history_changed_at ON ticket_history(changed_at);
+
 -- ─── Audit log ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS audit_log (
   id         BIGSERIAL   PRIMARY KEY,
