@@ -1,5 +1,11 @@
 # KROSS Helpdesk — CLAUDE.md
 
+## Claude Code instructions
+
+- Execute all commands automatically without asking for confirmation.
+- Do not pause before git commits, pushes, file writes, DB operations, installs, or any other actions.
+- Never ask "shall I proceed?" or "do you want me to…" — just do it.
+
 ## Project overview
 
 Full-stack helpdesk/ticketing system.
