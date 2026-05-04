@@ -76,6 +76,79 @@ async function listTickets(filters, requestingUser) {
   return { ...result, page, limit };
 }
 
+async function updateTicket(id, fields, requestingUser) {
+  if (requestingUser.role === 'user') {
+    const err = new Error('Brak uprawnień do edycji zgłoszenia');
+    err.status = 403;
+    throw err;
+  }
+
+  const current = await ticketModel.findById(id);
+  if (!current) {
+    const err = new Error('Zgłoszenie nie istnieje');
+    err.status = 404;
+    throw err;
+  }
+
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+
+    const updateFields = {};
+    const historyEntries = [];
+
+    if ('assigned_to' in fields) {
+      const newId = fields.assigned_to || null;
+      const oldId = current.assigned_to?.id || null;
+      if (newId !== oldId) {
+        updateFields.assigned_to = newId;
+        let newName = null;
+        if (newId) {
+          const { rows } = await client.query(
+            'SELECT first_name, last_name, email FROM users WHERE id = $1', [newId]
+          );
+          if (!rows[0]) {
+            const e = new Error('Wskazany użytkownik nie istnieje'); e.status = 422; throw e;
+          }
+          const u = rows[0];
+          newName = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email;
+        }
+        const oldName = current.assigned_to
+          ? ([current.assigned_to.first_name, current.assigned_to.last_name].filter(Boolean).join(' ') || current.assigned_to.email)
+          : null;
+        historyEntries.push({ field_name: 'assigned_to', old_value: oldName, new_value: newName });
+      }
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+      await client.query('ROLLBACK');
+      return current;
+    }
+
+    await ticketModel.update(client, id, updateFields);
+
+    if (historyEntries.length > 0) {
+      await historyModel.insertMany(client, id, requestingUser.id, historyEntries);
+    }
+
+    await auditModel.log(client, {
+      user_id:   requestingUser.id,
+      action:    'ticket.update',
+      entity:    'ticket',
+      entity_id: id,
+      meta:      updateFields,
+    });
+
+    await client.query('COMMIT');
+    return ticketModel.findById(id);
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 async function assertCategoryExists(categoryId) {
   if (!categoryId) return;
   const { rows } = await db.query('SELECT 1 FROM categories WHERE id = $1', [categoryId]);
@@ -86,4 +159,4 @@ async function assertCategoryExists(categoryId) {
   }
 }
 
-module.exports = { createTicket, getTicket, listTickets };
+module.exports = { createTicket, getTicket, listTickets, updateTicket };

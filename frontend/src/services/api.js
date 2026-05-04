@@ -32,6 +32,7 @@ export const ticketsApi = {
   list:   (params) => api.get('/tickets', { params }),
   getOne: (id)     => api.get(`/tickets/${id}`),
   create: (data)   => api.post('/tickets', data),
+  update: (id, data) => api.patch(`/tickets/${id}`, data),
 };
 
 export const categoriesApi = {

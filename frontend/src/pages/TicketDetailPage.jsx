@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ticketsApi, commentsApi, historyApi } from '../services/api';
 import { StatusBadge, PriorityBadge } from '../components/common/Badge';
 import Layout from '../components/common/Layout';
+import useAuthStore from '../store/authStore';
 
 /* ── helpers ──────────────────────────────────────────── */
 function fmt(iso) {
@@ -107,6 +108,9 @@ export default function TicketDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('comments');
+  const currentUser = useAuthStore((s) => s.user);
+  const queryClient = useQueryClient();
+  const isAgent = currentUser?.role === 'agent' || currentUser?.role === 'admin';
 
   const ticketQ = useQuery({
     queryKey: ['ticket', id],
@@ -123,6 +127,15 @@ export default function TicketDetailPage() {
     queryKey: ['ticket-history', id],
     queryFn:  () => historyApi.list(id).then((r) => r.data),
     enabled:  activeTab === 'history' && !!ticketQ.data,
+  });
+
+  const assignMutation = useMutation({
+    mutationFn: () => ticketsApi.update(id, { assigned_to: currentUser.id }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ticket', id] });
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['ticket-history', id] });
+    },
   });
 
   const ticket = ticketQ.data;
@@ -151,9 +164,23 @@ export default function TicketDetailPage() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
               <h1 className="text-xl font-bold text-gray-900 leading-snug">{ticket.title}</h1>
-              <div className="flex gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
                 <StatusBadge status={ticket.status} />
                 <PriorityBadge priority={ticket.priority} />
+                {isAgent && ticket.assigned_to?.id !== currentUser?.id && (
+                  <button
+                    onClick={() => assignMutation.mutate()}
+                    disabled={assignMutation.isPending}
+                    className="text-xs px-3 py-1 rounded-full border border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
+                  >
+                    {assignMutation.isPending ? 'Przypisywanie…' : 'Przypisz do mnie'}
+                  </button>
+                )}
+                {isAgent && ticket.assigned_to?.id === currentUser?.id && (
+                  <span className="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">
+                    Przypisano do mnie
+                  </span>
+                )}
               </div>
             </div>
 

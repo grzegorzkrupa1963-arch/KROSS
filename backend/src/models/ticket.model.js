@@ -122,4 +122,28 @@ async function findAll({ page = 1, limit = 20, status, priority, created_by, ass
   };
 }
 
-module.exports = { create, findById, findAll };
+const UPDATABLE = ['status', 'priority', 'category_id', 'assigned_to', 'resolved_at'];
+
+async function update(client, id, fields) {
+  const setClauses = [];
+  const params = [];
+
+  for (const key of UPDATABLE) {
+    if (key in fields) {
+      params.push(fields[key] ?? null);
+      setClauses.push(`${key} = $${params.length}`);
+    }
+  }
+
+  if (setClauses.length === 0) return null;
+
+  params.push(id);
+  const { rows } = await client.query(
+    `UPDATE tickets SET ${setClauses.join(', ')}, updated_at = NOW()
+     WHERE id = $${params.length} RETURNING *`,
+    params
+  );
+  return rows[0] || null;
+}
+
+module.exports = { create, findById, findAll, update };

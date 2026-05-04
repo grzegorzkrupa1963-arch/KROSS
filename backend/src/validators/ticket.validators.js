@@ -43,4 +43,12 @@ const createCommentRules = [
     .toBoolean(),
 ];
 
-module.exports = { createRules, listRules, uuidParam, createCommentRules, VALID_PRIORITIES, VALID_STATUSES };
+const patchRules = [
+  param('id').isUUID().withMessage('id musi być prawidłowym UUID'),
+  body('assigned_to')
+    .optional({ nullable: true })
+    .custom((v) => v === null || /^[0-9a-f-]{36}$/i.test(v))
+    .withMessage('assigned_to musi być prawidłowym UUID lub null'),
+];
+
+module.exports = { createRules, listRules, uuidParam, createCommentRules, patchRules, VALID_PRIORITIES, VALID_STATUSES };

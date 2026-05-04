@@ -41,4 +41,14 @@ async function list(req, res, next) {
   }
 }
 
-module.exports = { create, getOne, list };
+async function update(req, res, next) {
+  if (handleValidation(req, res)) return;
+  try {
+    const ticket = await ticketService.updateTicket(req.params.id, req.body, req.user);
+    res.json({ ticket });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { create, getOne, list, update };
