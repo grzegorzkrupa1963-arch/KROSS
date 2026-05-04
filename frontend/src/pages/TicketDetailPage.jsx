@@ -167,6 +167,15 @@ export default function TicketDetailPage() {
     },
   });
 
+  const statusMutation = useMutation({
+    mutationFn: (status) => ticketsApi.update(id, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ticket', id] });
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['ticket-history', id] });
+    },
+  });
+
   const ticket = ticketQ.data;
 
   return (
@@ -203,8 +212,33 @@ export default function TicketDetailPage() {
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-5">
                 <h1 className="text-xl font-bold text-gray-900 leading-snug">{ticket.title}</h1>
                 <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                  <StatusBadge status={ticket.status} />
                   <PriorityBadge priority={ticket.priority} />
+
+                  {/* Status — badge dla userów, selector dla agentów */}
+                  {isAgent ? (
+                    <div className="relative">
+                      <select
+                        value={ticket.status}
+                        disabled={statusMutation.isPending}
+                        onChange={(e) => statusMutation.mutate(e.target.value)}
+                        className="appearance-none pl-2.5 pr-7 py-1 rounded-full text-xs font-medium border cursor-pointer
+                          focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 transition-colors
+                          bg-white border-gray-300 text-gray-700 hover:border-blue-400"
+                      >
+                        <option value="open">Otwarte</option>
+                        <option value="in_progress">W toku</option>
+                        <option value="resolved">Rozwiązane</option>
+                        <option value="closed">Zamknięte</option>
+                      </select>
+                      <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <StatusBadge status={ticket.status} />
+                  )}
+
                   {isAgent && ticket.assigned_to?.id !== currentUser?.id && (
                     <button
                       onClick={() => assignMutation.mutate()}

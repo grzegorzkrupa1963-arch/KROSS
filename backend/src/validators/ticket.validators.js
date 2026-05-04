@@ -49,6 +49,10 @@ const patchRules = [
     .optional({ nullable: true })
     .custom((v) => v === null || /^[0-9a-f-]{36}$/i.test(v))
     .withMessage('assigned_to musi być prawidłowym UUID lub null'),
+  body('status')
+    .optional()
+    .isIn(VALID_STATUSES)
+    .withMessage(`status musi być jednym z: ${VALID_STATUSES.join(', ')}`),
 ];
 
 module.exports = { createRules, listRules, uuidParam, createCommentRules, patchRules, VALID_PRIORITIES, VALID_STATUSES };

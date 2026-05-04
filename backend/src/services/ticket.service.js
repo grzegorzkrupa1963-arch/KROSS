@@ -97,6 +97,21 @@ async function updateTicket(id, fields, requestingUser) {
     const updateFields = {};
     const historyEntries = [];
 
+    if ('status' in fields && fields.status !== current.status) {
+      updateFields.status = fields.status;
+      if (fields.status === 'resolved') {
+        updateFields.resolved_at = new Date().toISOString();
+      } else if (current.status === 'resolved') {
+        updateFields.resolved_at = null;
+      }
+      const STATUS_PL = { open: 'Otwarte', in_progress: 'W toku', resolved: 'Rozwiązane', closed: 'Zamknięte' };
+      historyEntries.push({
+        field_name: 'status',
+        old_value:  STATUS_PL[current.status] ?? current.status,
+        new_value:  STATUS_PL[fields.status]  ?? fields.status,
+      });
+    }
+
     if ('assigned_to' in fields) {
       const newId = fields.assigned_to || null;
       const oldId = current.assigned_to?.id || null;
