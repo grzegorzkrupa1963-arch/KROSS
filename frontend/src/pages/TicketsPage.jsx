@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ticketsApi } from '../services/api';
 import { StatusBadge, PriorityBadge } from '../components/common/Badge';
-import Button from '../components/common/Button';
 import Layout from '../components/common/Layout';
 import CreateTicketModal from '../components/tickets/CreateTicketModal';
 
@@ -32,7 +31,7 @@ export default function TicketsPage() {
     queryFn: () =>
       ticketsApi.list({ page, limit, ...(status && { status }), ...(priority && { priority }) })
         .then((r) => r.data),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const totalPages = data ? Math.ceil(data.total / limit) : 1;
@@ -54,9 +53,12 @@ export default function TicketsPage() {
               </p>
             )}
           </div>
-          <Button onClick={() => setShowModal(true)}>
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+          >
             + Nowe zgłoszenie
-          </Button>
+          </button>
         </div>
 
         {/* Filtry */}
