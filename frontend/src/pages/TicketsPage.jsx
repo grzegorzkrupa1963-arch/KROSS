@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ticketsApi } from '../services/api';
 import { StatusBadge, PriorityBadge } from '../components/common/Badge';
+import Button from '../components/common/Button';
 import Layout from '../components/common/Layout';
+import CreateTicketModal from '../components/tickets/CreateTicketModal';
 
 const STATUSES   = ['', 'open', 'in_progress', 'resolved', 'closed'];
 const PRIORITIES = ['', 'low', 'medium', 'high', 'critical'];
@@ -17,9 +19,10 @@ function formatDate(iso) {
 }
 
 export default function TicketsPage() {
-  const [page, setPage]         = useState(1);
-  const [status, setStatus]     = useState('');
-  const [priority, setPriority] = useState('');
+  const [page, setPage]           = useState(1);
+  const [status, setStatus]       = useState('');
+  const [priority, setPriority]   = useState('');
+  const [showModal, setShowModal] = useState(false);
   const limit = 15;
 
   const { data, isLoading, isError, error } = useQuery({
@@ -49,6 +52,9 @@ export default function TicketsPage() {
               </p>
             )}
           </div>
+          <Button onClick={() => setShowModal(true)}>
+            + Nowe zgłoszenie
+          </Button>
         </div>
 
         {/* Filtry */}
@@ -160,6 +166,8 @@ export default function TicketsPage() {
           </div>
         )}
       </div>
+
+      {showModal && <CreateTicketModal onClose={() => setShowModal(false)} />}
     </Layout>
   );
 }

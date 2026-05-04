@@ -34,4 +34,8 @@ export const ticketsApi = {
   create: (data)   => api.post('/tickets', data),
 };
 
+export const categoriesApi = {
+  list: () => api.get('/categories'),
+};
+
 export default api;
