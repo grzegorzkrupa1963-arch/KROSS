@@ -1,13 +1,13 @@
 const { Router } = require('express');
+const controller = require('../controllers/auth.controller');
+const { authenticate } = require('../middleware/auth.middleware');
+const { registerRules, loginRules } = require('../validators/auth.validators');
+
 const router = Router();
 
-// POST /api/v1/auth/login
-router.post('/login', (req, res) => res.status(501).json({ message: 'TODO' }));
-// POST /api/v1/auth/register
-router.post('/register', (req, res) => res.status(501).json({ message: 'TODO' }));
-// POST /api/v1/auth/refresh
-router.post('/refresh', (req, res) => res.status(501).json({ message: 'TODO' }));
-// POST /api/v1/auth/logout
-router.post('/logout', (req, res) => res.status(501).json({ message: 'TODO' }));
+router.post('/register', registerRules, controller.register);
+router.post('/login',    loginRules,    controller.login);
+router.post('/logout',   authenticate,  controller.logout);
+router.get('/me',        authenticate,  controller.me);
 
 module.exports = router;
