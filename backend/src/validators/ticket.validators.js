@@ -31,4 +31,16 @@ const uuidParam = [
   param('id').isUUID().withMessage('id musi być prawidłowym UUID'),
 ];
 
-module.exports = { createRules, listRules, uuidParam, VALID_PRIORITIES, VALID_STATUSES };
+const createCommentRules = [
+  param('id').isUUID().withMessage('id zgłoszenia musi być prawidłowym UUID'),
+  body('body')
+    .trim()
+    .notEmpty().withMessage('Treść komentarza jest wymagana')
+    .isLength({ max: 10000 }).withMessage('Komentarz może mieć maksymalnie 10 000 znaków'),
+  body('is_internal')
+    .optional()
+    .isBoolean().withMessage('is_internal musi być wartością true lub false')
+    .toBoolean(),
+];
+
+module.exports = { createRules, listRules, uuidParam, createCommentRules, VALID_PRIORITIES, VALID_STATUSES };
