@@ -38,4 +38,12 @@ export const categoriesApi = {
   list: () => api.get('/categories'),
 };
 
+export const commentsApi = {
+  list: (ticketId) => api.get(`/tickets/${ticketId}/comments`),
+};
+
+export const historyApi = {
+  list: (ticketId) => api.get(`/tickets/${ticketId}/history`),
+};
+
 export default api;

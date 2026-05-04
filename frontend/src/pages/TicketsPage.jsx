@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ticketsApi } from '../services/api';
 import { StatusBadge, PriorityBadge } from '../components/common/Badge';
@@ -23,6 +24,7 @@ export default function TicketsPage() {
   const [status, setStatus]       = useState('');
   const [priority, setPriority]   = useState('');
   const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
   const limit = 15;
 
   const { data, isLoading, isError, error } = useQuery({
@@ -112,7 +114,11 @@ export default function TicketsPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {data.data.map((ticket) => (
-                  <tr key={ticket.id} className="hover:bg-blue-50 transition-colors">
+                  <tr
+                    key={ticket.id}
+                    onClick={() => navigate(`/tickets/${ticket.id}`)}
+                    className="hover:bg-blue-50 transition-colors cursor-pointer"
+                  >
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900 leading-tight">{ticket.title}</div>
                       <div className="flex gap-2 mt-1 sm:hidden">

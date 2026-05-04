@@ -4,6 +4,7 @@ import RequireAuth from './components/common/RequireAuth';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import TicketsPage from './pages/TicketsPage';
+import TicketDetailPage from './pages/TicketDetailPage';
 
 export default function App() {
   const ready = useBootstrap();
@@ -23,6 +24,10 @@ export default function App() {
       <Route
         path="/tickets"
         element={<RequireAuth><TicketsPage /></RequireAuth>}
+      />
+      <Route
+        path="/tickets/:id"
+        element={<RequireAuth><TicketDetailPage /></RequireAuth>}
       />
       <Route path="/" element={<Navigate to="/tickets" replace />} />
       <Route path="*" element={<Navigate to="/tickets" replace />} />
