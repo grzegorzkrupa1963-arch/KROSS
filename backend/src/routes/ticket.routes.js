@@ -1,20 +1,18 @@
 const { Router } = require('express');
 const { authenticate } = require('../middleware/auth.middleware');
-const router = Router();
+const controller = require('../controllers/ticket.controller');
+const { createRules, listRules, uuidParam } = require('../validators/ticket.validators');
 
+const router = Router();
 router.use(authenticate);
 
-// GET    /api/v1/tickets
-router.get('/',        (req, res) => res.status(501).json({ message: 'TODO' }));
-// POST   /api/v1/tickets
-router.post('/',       (req, res) => res.status(501).json({ message: 'TODO' }));
-// GET    /api/v1/tickets/:id
-router.get('/:id',     (req, res) => res.status(501).json({ message: 'TODO' }));
-// PATCH  /api/v1/tickets/:id
-router.patch('/:id',   (req, res) => res.status(501).json({ message: 'TODO' }));
-// DELETE /api/v1/tickets/:id
-router.delete('/:id',  (req, res) => res.status(501).json({ message: 'TODO' }));
-// POST   /api/v1/tickets/:id/comments
-router.post('/:id/comments', (req, res) => res.status(501).json({ message: 'TODO' }));
+router.get('/',    listRules,             controller.list);
+router.post('/',   createRules,           controller.create);
+router.get('/:id', uuidParam,             controller.getOne);
+
+// Remaining routes stay as TODO stubs for future KRS tasks
+router.patch('/:id',        (req, res) => res.status(501).json({ message: 'TODO' }));
+router.delete('/:id',       (req, res) => res.status(501).json({ message: 'TODO' }));
+router.post('/:id/comments',(req, res) => res.status(501).json({ message: 'TODO' }));
 
 module.exports = router;
