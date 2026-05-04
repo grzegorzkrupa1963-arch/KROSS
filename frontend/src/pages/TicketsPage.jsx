@@ -5,6 +5,7 @@ import { ticketsApi } from '../services/api';
 import { StatusBadge, PriorityBadge } from '../components/common/Badge';
 import Layout from '../components/common/Layout';
 import CreateTicketModal from '../components/tickets/CreateTicketModal';
+import useAuthStore from '../store/authStore';
 
 const STATUSES   = ['', 'open', 'in_progress', 'resolved', 'closed'];
 const PRIORITIES = ['', 'low', 'medium', 'high', 'critical'];
@@ -18,12 +19,20 @@ function formatDate(iso) {
   });
 }
 
+function userName(u) {
+  if (!u) return '—';
+  const full = [u.first_name, u.last_name].filter(Boolean).join(' ');
+  return full || u.email;
+}
+
 export default function TicketsPage() {
   const [page, setPage]           = useState(1);
   const [status, setStatus]       = useState('');
   const [priority, setPriority]   = useState('');
   const [showModal, setShowModal] = useState(false);
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
+  const user      = useAuthStore((s) => s.user);
+  const isAgent   = user?.role === 'agent' || user?.role === 'admin';
   const limit = 15;
 
   const { data, isLoading, isError, error } = useQuery({
@@ -46,7 +55,9 @@ export default function TicketsPage() {
         {/* Nagłówek */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Moje zgłoszenia</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {isAgent ? 'Wszystkie zgłoszenia' : 'Moje zgłoszenia'}
+            </h2>
             {data && (
               <p className="text-sm text-gray-500 mt-0.5">
                 Łącznie: {data.total} {data.total === 1 ? 'zgłoszenie' : 'zgłoszeń'}
@@ -111,6 +122,7 @@ export default function TicketsPage() {
                   <th className="px-4 py-3 hidden sm:table-cell">Status</th>
                   <th className="px-4 py-3 hidden md:table-cell">Priorytet</th>
                   <th className="px-4 py-3 hidden lg:table-cell">Kategoria</th>
+                  {isAgent && <th className="px-4 py-3 hidden lg:table-cell">Autor</th>}
                   <th className="px-4 py-3 hidden md:table-cell">Data utworzenia</th>
                 </tr>
               </thead>
@@ -137,6 +149,11 @@ export default function TicketsPage() {
                     <td className="px-4 py-3 hidden lg:table-cell text-gray-500">
                       {ticket.category?.name ?? <span className="text-gray-300">—</span>}
                     </td>
+                    {isAgent && (
+                      <td className="px-4 py-3 hidden lg:table-cell text-gray-500">
+                        {userName(ticket.created_by)}
+                      </td>
+                    )}
                     <td className="px-4 py-3 hidden md:table-cell text-gray-500 whitespace-nowrap">
                       {formatDate(ticket.created_at)}
                     </td>

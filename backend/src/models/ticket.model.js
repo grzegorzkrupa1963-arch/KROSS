@@ -4,6 +4,10 @@ const db = require('../config/db');
 const LIST_FIELDS = `
   t.id, t.title, t.status, t.priority, t.created_at,
   t.category_id,   c.name  AS category_name,
+  t.created_by,
+  cr.first_name    AS creator_first_name,
+  cr.last_name     AS creator_last_name,
+  cr.email         AS creator_email,
   t.assigned_to,
   a.first_name     AS assignee_first_name,
   a.last_name      AS assignee_last_name,
@@ -25,8 +29,9 @@ const DETAIL_FIELDS = `
 `;
 
 const LIST_JOINS = `
-  LEFT JOIN categories c ON c.id  = t.category_id
-  LEFT JOIN users      a ON a.id  = t.assigned_to
+  LEFT JOIN categories c  ON c.id  = t.category_id
+  LEFT JOIN users      cr ON cr.id = t.created_by
+  LEFT JOIN users      a  ON a.id  = t.assigned_to
 `;
 
 const DETAIL_JOINS = `
@@ -44,6 +49,7 @@ function shapeListItem(row) {
     category:    row.category_id
       ? { id: row.category_id, name: row.category_name }
       : null,
+    created_by:  { id: row.created_by, first_name: row.creator_first_name, last_name: row.creator_last_name, email: row.creator_email },
     created_at:  row.created_at,
     assigned_to: row.assigned_to
       ? { id: row.assigned_to, first_name: row.assignee_first_name, last_name: row.assignee_last_name, email: row.assignee_email }
