@@ -54,7 +54,7 @@ async function getTicket(id, requestingUser) {
   }
 
   // Zwykły user widzi tylko własne zgłoszenia
-  if (requestingUser.role === 'user' && ticket.created_by !== requestingUser.id) {
+  if (requestingUser.role === 'user' && ticket.created_by.id !== requestingUser.id) {
     const err = new Error('Brak dostępu do tego zgłoszenia');
     err.status = 403;
     throw err;
@@ -64,11 +64,16 @@ async function getTicket(id, requestingUser) {
 }
 
 async function listTickets(filters, requestingUser) {
+  const page  = Math.max(1, parseInt(filters.page)  || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(filters.limit) || 20));
+
   // User widzi tylko własne zgłoszenia; agent/admin widzi wszystkie
   if (requestingUser.role === 'user') {
     filters.created_by = requestingUser.id;
   }
-  return ticketModel.findAll(filters);
+
+  const result = await ticketModel.findAll({ ...filters, page, limit });
+  return { ...result, page, limit };
 }
 
 async function assertCategoryExists(categoryId) {

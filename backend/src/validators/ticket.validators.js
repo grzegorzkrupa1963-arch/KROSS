@@ -24,6 +24,7 @@ const listRules = [
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('limit musi być między 1 a 100').toInt(),
   query('status').optional().isIn(VALID_STATUSES).withMessage(`status musi być jednym z: ${VALID_STATUSES.join(', ')}`),
   query('priority').optional().isIn(VALID_PRIORITIES).withMessage(`priority musi być jednym z: ${VALID_PRIORITIES.join(', ')}`),
+  query('assigned_to').optional().isUUID().withMessage('assigned_to musi być prawidłowym UUID'),
 ];
 
 const uuidParam = [

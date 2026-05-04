@@ -33,8 +33,8 @@ async function getOne(req, res, next) {
 async function list(req, res, next) {
   if (handleValidation(req, res)) return;
   try {
-    const { page, limit, status, priority } = req.query;
-    const result = await ticketService.listTickets({ page, limit, status, priority }, req.user);
+    const { page, limit, status, priority, assigned_to } = req.query;
+    const result = await ticketService.listTickets({ page, limit, status, priority, assigned_to }, req.user);
     res.json(result);
   } catch (err) {
     next(err);

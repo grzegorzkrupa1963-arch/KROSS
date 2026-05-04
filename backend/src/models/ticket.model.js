@@ -1,12 +1,55 @@
 const db = require('../config/db');
 
-const TICKET_FIELDS = `
+// Fields used in list view — lean, no description
+const LIST_FIELDS = `
+  t.id, t.title, t.status, t.priority, t.created_at,
+  t.category_id,   c.name  AS category_name,
+  t.assigned_to,
+  a.first_name     AS assignee_first_name,
+  a.last_name      AS assignee_last_name,
+  a.email          AS assignee_email
+`;
+
+// Fields used in detail view — full data
+const DETAIL_FIELDS = `
   t.id, t.title, t.description, t.status, t.priority,
   t.category_id, t.created_by, t.assigned_to,
   t.created_at, t.updated_at, t.resolved_at,
-  c.name AS category_name,
-  u.first_name AS creator_first_name, u.last_name AS creator_last_name, u.email AS creator_email
+  c.name         AS category_name,
+  cr.first_name  AS creator_first_name,
+  cr.last_name   AS creator_last_name,
+  cr.email       AS creator_email,
+  a.first_name   AS assignee_first_name,
+  a.last_name    AS assignee_last_name,
+  a.email        AS assignee_email
 `;
+
+const LIST_JOINS = `
+  LEFT JOIN categories c ON c.id  = t.category_id
+  LEFT JOIN users      a ON a.id  = t.assigned_to
+`;
+
+const DETAIL_JOINS = `
+  LEFT JOIN categories c  ON c.id  = t.category_id
+  LEFT JOIN users      cr ON cr.id = t.created_by
+  LEFT JOIN users      a  ON a.id  = t.assigned_to
+`;
+
+function shapeListItem(row) {
+  return {
+    id:          row.id,
+    title:       row.title,
+    status:      row.status,
+    priority:    row.priority,
+    category:    row.category_id
+      ? { id: row.category_id, name: row.category_name }
+      : null,
+    created_at:  row.created_at,
+    assigned_to: row.assigned_to
+      ? { id: row.assigned_to, first_name: row.assignee_first_name, last_name: row.assignee_last_name, email: row.assignee_email }
+      : null,
+  };
+}
 
 async function create(client, { title, description, status, priority, category_id, created_by }) {
   const { rows } = await client.query(
@@ -20,14 +63,24 @@ async function create(client, { title, description, status, priority, category_i
 
 async function findById(id) {
   const { rows } = await db.query(
-    `SELECT ${TICKET_FIELDS}
-     FROM tickets t
-     LEFT JOIN categories c ON c.id = t.category_id
-     LEFT JOIN users u ON u.id = t.created_by
-     WHERE t.id = $1`,
+    `SELECT ${DETAIL_FIELDS} FROM tickets t ${DETAIL_JOINS} WHERE t.id = $1`,
     [id]
   );
-  return rows[0] || null;
+  if (!rows[0]) return null;
+  const r = rows[0];
+  return {
+    id:          r.id,
+    title:       r.title,
+    description: r.description,
+    status:      r.status,
+    priority:    r.priority,
+    category:    r.category_id ? { id: r.category_id, name: r.category_name } : null,
+    created_by:  { id: r.created_by, first_name: r.creator_first_name, last_name: r.creator_last_name, email: r.creator_email },
+    assigned_to: r.assigned_to ? { id: r.assigned_to, first_name: r.assignee_first_name, last_name: r.assignee_last_name, email: r.assignee_email } : null,
+    created_at:  r.created_at,
+    updated_at:  r.updated_at,
+    resolved_at: r.resolved_at,
+  };
 }
 
 async function findAll({ page = 1, limit = 20, status, priority, created_by, assigned_to } = {}) {
@@ -44,10 +97,7 @@ async function findAll({ page = 1, limit = 20, status, priority, created_by, ass
 
   params.push(limit, offset);
   const { rows } = await db.query(
-    `SELECT ${TICKET_FIELDS}
-     FROM tickets t
-     LEFT JOIN categories c ON c.id = t.category_id
-     LEFT JOIN users u ON u.id = t.created_by
+    `SELECT ${LIST_FIELDS} FROM tickets t ${LIST_JOINS}
      ${where}
      ORDER BY t.created_at DESC
      LIMIT $${params.length - 1} OFFSET $${params.length}`,
@@ -60,7 +110,10 @@ async function findAll({ page = 1, limit = 20, status, priority, created_by, ass
     countParams
   );
 
-  return { data: rows, total: parseInt(countRows[0].count) };
+  return {
+    data:  rows.map(shapeListItem),
+    total: parseInt(countRows[0].count),
+  };
 }
 
 module.exports = { create, findById, findAll };
